@@ -1,32 +1,18 @@
 [
   {
-    "id": 1,
-    "match_name": "MATCH 1",
-    "team1_name": "BMSC",
-    "team2_name": "PRSC",
-    "team1_image": "/uploads/upcoming-matches/bmscu19-1779463916074-655378502.jpg",
-    "team2_image": "/uploads/upcoming-matches/prscu19-1779463916126-145839876.jpg",
-    "venue": "BSC",
-    "match_date": "2026-05-23",
-    "match_time": "09:57",
-    "sport_type": "Football",
-    "description": "",
-    "created_at": "2026-05-22T15:27:47.564Z",
-    "updated_at": "2026-05-22T15:31:56.294Z"
-  },
-  {
     "id": 2,
     "match_name": "MATCH 2 (Girls Match)",
     "team1_name": "UPS",
     "team2_name": "VSMS",
-    "team1_image": "/uploads/upcoming-matches/prscu19-1779464194121-57903717.jpg",
-    "team2_image": "/uploads/upcoming-matches/prscu19-1779464194252-476869096.jpg",
+    "team1_image": "/uploads/upcoming-matches/girl1-1779468183203-54445837.jpg",
+    "team2_image": "/uploads/upcoming-matches/girl2-1779468183204-12325252.jpg",
     "venue": "BSC",
     "match_date": "2026-05-23",
     "match_time": "11:00",
     "sport_type": "Football",
-    "description": null,
-    "created_at": "2026-05-22T15:36:34.378Z"
+    "description": "",
+    "created_at": "2026-05-22T15:36:34.378Z",
+    "updated_at": "2026-05-22T16:43:03.220Z"
   },
   {
     "id": 3,
@@ -42,5 +28,19 @@
     "description": "",
     "created_at": "2026-05-22T15:37:21.265Z",
     "updated_at": "2026-05-22T15:56:49.687Z"
+  },
+  {
+    "id": 4,
+    "match_name": "MATCH 1",
+    "team1_name": "BMSC",
+    "team2_name": "PRSC",
+    "team1_image": "/uploads/upcoming-matches/bmscu19-1779467511011-440429355.jpg",
+    "team2_image": "/uploads/upcoming-matches/prscu19-1779467511067-730142187.jpg",
+    "venue": "BSC",
+    "match_date": "2026-05-23",
+    "match_time": "10:01",
+    "sport_type": "Football",
+    "description": null,
+    "created_at": "2026-05-22T16:31:51.151Z"
   }
 ]

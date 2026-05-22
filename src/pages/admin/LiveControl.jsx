@@ -1,245 +1,244 @@
-import { useRef, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useLiveStore } from '../../store/index.js';
-import { webrtcService } from '../../services/webrtc.js';
+import { liveService } from '../../services/liveService.js';
+import { extractYoutubeVideoId } from '../../utils/youtubeHelper.js';
 
 export default function LiveControl() {
-  const { isLive, streamTitle, setIsLive, setStreamTitle } = useLiveStore();
-  const videoRef = useRef(null);
-  const [cameraConnected, setCameraConnected] = useState(false);
-  const [stream, setStream] = useState(null);
+  const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [matchTitle, setMatchTitle] = useState('');
+  const [isLive, setIsLive] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [inputTitle, setInputTitle] = useState(streamTitle);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-      webrtcService.stopBroadcast();
-      webrtcService.disconnect();
-    };
-  }, [stream]);
+    loadLiveStatus();
+  }, []);
 
-  const handleConnectCamera = async () => {
-    setLoading(true);
+  const loadLiveStatus = async () => {
     try {
-      console.log('Requesting camera access...');
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          facingMode: 'environment',
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        },
-        audio: true,
-      });
-      
-      console.log('Stream obtained:', mediaStream);
-      console.log('Video tracks:', mediaStream.getVideoTracks());
-      console.log('Audio tracks:', mediaStream.getAudioTracks());
-      
-      setStream(mediaStream);
-      
-      if (videoRef.current) {
-        console.log('Attaching stream to video element');
-        videoRef.current.srcObject = mediaStream;
-        
-        try {
-          await videoRef.current.play();
-          console.log('Video playback started');
-        } catch (playError) {
-          console.error('Video play error:', playError);
-        }
-      } else {
-        console.error('videoRef.current is null');
+      const status = await liveService.fetchLiveStatus();
+      setIsLive(status.isLive);
+      if (status.isLive) {
+        setMatchTitle(status.matchTitle || '');
       }
-      
-      setCameraConnected(true);
-    } catch (error) {
-      console.error('Camera access denied:', error);
-      alert('Camera/Microphone access denied. Please allow permissions.');
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      console.error('Failed to load live status:', err);
     }
   };
 
-  const handleDisconnectCamera = () => {
-    if (isLive) {
-      handleStopLive();
-    }
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-      setStream(null);
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    setCameraConnected(false);
-  };
+  const handleGoLive = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
 
-  const handleStartLive = async () => {
-    if (!stream) {
-      alert('Please connect camera first');
+    if (!youtubeUrl.trim()) {
+      setError('Please enter a YouTube URL');
       return;
     }
+    if (!matchTitle.trim()) {
+      setError('Please enter a match title');
+      return;
+    }
+
+    const videoId = extractYoutubeVideoId(youtubeUrl);
+    if (!videoId) {
+      setError('Invalid YouTube URL. Please enter a valid YouTube video or livestream link.');
+      return;
+    }
+
     setLoading(true);
     try {
-      const title = inputTitle || 'Live Match';
-      await webrtcService.startBroadcast(stream, title);
+      await liveService.startLiveStream(videoId, matchTitle);
+      setSuccess('✅ Live stream is now active!');
       setIsLive(true);
-      setStreamTitle(title);
-    } catch (error) {
-      console.error('Error starting stream:', error);
-      alert('Failed to start live stream');
+      setYoutubeUrl('');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.message || 'Failed to start live stream');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStopLive = async () => {
+  const handleEndLive = async () => {
+    if (!window.confirm('Are you sure you want to end the live stream?')) return;
+
     setLoading(true);
+    setError('');
     try {
-      webrtcService.stopBroadcast();
+      await liveService.endLiveStream();
       setIsLive(false);
-      setStreamTitle('');
-    } catch (error) {
-      console.error('Error stopping stream:', error);
+      setMatchTitle('');
+      setSuccess('✅ Live stream ended');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.message || 'Failed to end live stream');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-navy-blue mb-8">Live Stream Control</h1>
-      </div>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-6"
+    >
+      <div className="max-w-2xl mx-auto">
+        <motion.div
+          initial={{ y: -20 }}
+          animate={{ y: 0 }}
+          className="mb-8"
+        >
+          <h1 className="text-4xl font-bold text-white mb-2">🎬 LIVE STREAM CONTROL</h1>
+          <p className="text-cyan-400">Manage your YouTube Live broadcast</p>
+        </motion.div>
 
-      {/* Live Status */}
-      <motion.div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-navy-blue">Stream Status</h2>
-          <motion.div
-            className={`flex items-center space-x-2 px-4 py-2 rounded-full font-bold ${
-              isLive
-                ? 'bg-red-100 text-red-600'
-                : 'bg-gray-100 text-gray-600'
-            }`}
-            animate={isLive ? { opacity: [1, 0.5, 1] } : {}}
-            transition={isLive ? { duration: 1, repeat: Infinity } : {}}
-          >
-            <span className={`w-3 h-3 rounded-full ${isLive ? 'bg-red-600' : 'bg-gray-400'}`}></span>
-            <span>{isLive ? 'LIVE' : 'OFFLINE'}</span>
-          </motion.div>
-        </div>
-
-        {isLive && (
-          <div className="bg-blue-50 border border-sky-blue rounded p-4">
-            <p className="text-navy-blue font-semibold">Current Stream: {streamTitle}</p>
+        <motion.div
+          initial={{ scale: 0.95 }}
+          animate={{ scale: 1 }}
+          className={`mb-8 p-6 rounded-2xl ${
+            isLive
+              ? 'bg-gradient-to-r from-red-500 to-red-600'
+              : 'bg-gradient-to-r from-slate-700 to-slate-800'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white/80 text-sm font-semibold uppercase">Status</p>
+              <p className="text-white text-2xl font-bold mt-1">
+                {isLive ? (
+                  <>
+                    <span className="inline-block w-3 h-3 bg-red-300 rounded-full animate-pulse mr-2"></span>
+                    LIVE NOW
+                  </>
+                ) : (
+                  'OFFLINE'
+                )}
+              </p>
+            </div>
+            {isLive && (
+              <p className="text-white/90 text-sm">{matchTitle}</p>
+            )}
           </div>
-        )}
-      </motion.div>
+        </motion.div>
 
-      {/* Camera Preview */}
-      <motion.div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-2xl font-bold text-navy-blue mb-4">Camera Preview</h2>
-        
-        <div className="mb-6 relative bg-black rounded-lg overflow-hidden aspect-video">
-          <video
-            ref={videoRef}
-            autoPlay
-            muted
-            playsInline
-            className={`w-full h-full object-cover ${!cameraConnected ? 'hidden' : ''}`}
-          />
-          {!cameraConnected && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
-              <div className="text-6xl mb-4">📹</div>
-              <p>Camera not connected</p>
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white rounded-2xl shadow-2xl p-8 mb-6"
+        >
+          {!isLive ? (
+            <form onSubmit={handleGoLive} className="space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-navy-blue mb-2">
+                  🎥 YouTube Live URL
+                </label>
+                <input
+                  type="text"
+                  value={youtubeUrl}
+                  onChange={(e) => setYoutubeUrl(e.target.value)}
+                  placeholder="https://www.youtube.com/watch?v=abc123xyz"
+                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:outline-none focus:border-sky-500 transition"
+                  disabled={loading}
+                />
+                <p className="text-slate-600 text-xs mt-2">
+                  ℹ️ Paste your YouTube livestream URL. Video ID will be extracted automatically.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-navy-blue mb-2">
+                  🏆 Match Title
+                </label>
+                <input
+                  type="text"
+                  value={matchTitle}
+                  onChange={(e) => setMatchTitle(e.target.value)}
+                  placeholder="e.g., Bearhatty SC vs Tigers FC"
+                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:outline-none focus:border-sky-500 transition"
+                  disabled={loading}
+                />
+              </div>
+
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-4 bg-red-100 border-2 border-red-400 text-red-700 rounded-lg"
+                >
+                  {error}
+                </motion.div>
+              )}
+
+              {success && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-4 bg-green-100 border-2 border-green-400 text-green-700 rounded-lg"
+                >
+                  {success}
+                </motion.div>
+              )}
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="submit"
+                disabled={loading}
+                className="w-full py-4 bg-gradient-to-r from-red-500 to-red-600 text-white font-bold rounded-lg hover:shadow-lg transition disabled:opacity-50"
+              >
+                {loading ? '🔄 Starting...' : '🔴 GO LIVE'}
+              </motion.button>
+            </form>
+          ) : (
+            <div className="text-center space-y-6">
+              <div>
+                <p className="text-slate-600 font-semibold mb-2">Currently Broadcasting</p>
+                <p className="text-2xl font-bold text-navy-blue">{matchTitle}</p>
+              </div>
+
+              <div className="p-4 bg-blue-100 rounded-lg">
+                <p className="text-sm text-blue-900">
+                  ✅ Your livestream is now playing on the public live page.
+                </p>
+                <p className="text-sm text-blue-900 mt-2">
+                  Users can watch at: <strong>/live</strong>
+                </p>
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleEndLive}
+                disabled={loading}
+                className="w-full py-4 bg-gradient-to-r from-slate-700 to-slate-800 text-white font-bold rounded-lg hover:from-slate-800 hover:to-slate-900 transition disabled:opacity-50"
+              >
+                {loading ? '⏹️ Ending...' : '⏹️ END LIVE STREAM'}
+              </motion.button>
             </div>
           )}
-        </div>
+        </motion.div>
 
-        <div className="grid md:grid-cols-2 gap-4">
-          <button
-            onClick={handleConnectCamera}
-            disabled={cameraConnected || loading}
-            className={`px-6 py-3 rounded-lg font-semibold text-white smooth-transition ${
-              cameraConnected || loading
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-green-500 hover:bg-green-600'
-            }`}
-          >
-            {loading ? 'Connecting...' : 'Connect Camera'}
-          </button>
-          <button
-            onClick={handleDisconnectCamera}
-            disabled={!cameraConnected}
-            className={`px-6 py-3 rounded-lg font-semibold text-white smooth-transition ${
-              !cameraConnected
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-red-500 hover:bg-red-600'
-            }`}
-          >
-            Disconnect Camera
-          </button>
-        </div>
-      </motion.div>
-
-      {/* Stream Control */}
-      <motion.div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-2xl font-bold text-navy-blue mb-6">Stream Settings</h2>
-        
-        <div className="mb-6">
-          <label className="block text-gray-700 font-semibold mb-2">Stream Title</label>
-          <input
-            type="text"
-            value={inputTitle}
-            onChange={(e) => setInputTitle(e.target.value)}
-            placeholder="Enter stream title (e.g., Football vs City United)"
-            disabled={isLive}
-            className="w-full border border-gray-300 rounded-lg p-3 disabled:bg-gray-100"
-          />
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-4">
-          <button
-            onClick={handleStartLive}
-            disabled={!cameraConnected || isLive || loading}
-            className={`px-6 py-3 rounded-lg font-semibold text-white smooth-transition ${
-              !cameraConnected || isLive || loading
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-green-500 hover:bg-green-600'
-            }`}
-          >
-            {loading ? 'Starting...' : '▶️ Start Live'}
-          </button>
-          <button
-            onClick={handleStopLive}
-            disabled={!isLive || loading}
-            className={`px-6 py-3 rounded-lg font-semibold text-white smooth-transition ${
-              !isLive || loading
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-red-500 hover:bg-red-600'
-            }`}
-          >
-            {loading ? 'Stopping...' : '⏹️ Stop Live'}
-          </button>
-        </div>
-      </motion.div>
-
-      {/* Info */}
-      <motion.div className="bg-blue-50 border border-sky-blue rounded-lg p-6">
-        <h3 className="font-bold text-navy-blue mb-3">📋 Instructions</h3>
-        <ul className="text-gray-700 space-y-2 text-sm">
-          <li>✓ Click "Connect Camera" to request camera/microphone permissions</li>
-          <li>✓ Preview your stream in real-time</li>
-          <li>✓ Enter a stream title before going live</li>
-          <li>✓ Click "Start Live" to begin broadcasting</li>
-          <li>✓ Viewers can watch on the Live page</li>
-          <li>✓ Click "Stop Live" when done</li>
-        </ul>
-      </motion.div>
-    </div>
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="bg-blue-900/30 border-2 border-cyan-400 rounded-xl p-6"
+        >
+          <h3 className="text-cyan-400 font-bold mb-3">ℹ️ How to Use</h3>
+          <ul className="text-white/90 space-y-2 text-sm">
+            <li>✓ Start your livestream on YouTube</li>
+            <li>✓ Copy the YouTube URL from your browser</li>
+            <li>✓ Paste it here and enter the match title</li>
+            <li>✓ Click "GO LIVE" to start broadcasting on the website</li>
+            <li>✓ Users can watch at /live page instantly</li>
+            <li>✓ Click "END LIVE STREAM" when finished</li>
+          </ul>
+        </motion.div>
+      </div>
+    </motion.div>
   );
 }
