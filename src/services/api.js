@@ -37,22 +37,7 @@ export const mockMatches = [
   },
 ];
 
-export const mockAchievements = [
-  {
-    id: '1',
-    title: 'Football Championship 2024',
-    description: 'Won the regional football championship',
-    media_url: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=500&h=500&fit=crop',
-    media_type: 'image',
-  },
-  {
-    id: '2',
-    title: 'Hockey Tournament Victory',
-    description: 'First place in national hockey tournament',
-    media_url: 'https://images.unsplash.com/photo-1518611505868-48510c8dfa93?w=500&h=500&fit=crop',
-    media_type: 'image',
-  },
-];
+export const mockAchievements = [];
 
 // API service functions (mock implementations)
 export const apiService = {
@@ -87,9 +72,8 @@ export const apiService = {
 
   // Achievements
   getAchievements: async () => {
-    // In production: fetch from Supabase
     return new Promise((resolve) => {
-      setTimeout(() => resolve(mockAchievements), 500);
+      setTimeout(() => resolve([]), 500);
     });
   },
 
