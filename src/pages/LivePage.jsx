@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { liveService } from '../services/liveService.js';
 import LiveBadge from '../components/LiveBadge.jsx';
+import LiveChat from '../components/LiveChat.jsx';
 
 export default function LivePage() {
   const [isLive, setIsLive] = useState(false);
@@ -48,82 +49,84 @@ export default function LivePage() {
       </section>
 
       <section className="py-16">
-        <div className="max-w-6xl mx-auto px-4">
-          <motion.div
-            className="bg-white rounded-lg shadow-xl overflow-hidden"
-            whileHover={{ boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)' }}
-          >
-            {loading ? (
-              <div className="min-h-96 flex flex-col items-center justify-center p-8">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                  className="text-6xl mb-4"
-                >
-                  ⏳
-                </motion.div>
-                <h2 className="text-2xl font-bold text-navy-blue mb-2">Loading...</h2>
-                <p className="text-gray-600">Checking live status</p>
-              </div>
-            ) : isLive && youtubeVideoId ? (
-              <div className="space-y-6">
-                <div className="aspect-video bg-black relative">
-                  <iframe
-                    width="100%"
-                    height="100%"
-                    src={`https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&rel=0`}
-                    title="Live Stream"
-                    frameBorder="0"
-                    allow="autoplay; encrypted-media; fullscreen"
-                    allowFullScreen
-                    className="absolute inset-0 w-full h-full"
-                  />
-                  
-                  <motion.div
-                    className="absolute top-4 right-4 bg-red-600 text-white px-4 py-2 rounded-full font-bold flex items-center space-x-2 z-10"
-                    animate={{ opacity: [1, 0.7, 1] }}
-                    transition={{ duration: 1, repeat: Infinity }}
-                  >
-                    <span className="w-2 h-2 bg-white rounded-full"></span>
-                    <span>LIVE</span>
-                  </motion.div>
-                </div>
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <motion.div
+                className="bg-white rounded-lg shadow-xl overflow-hidden"
+                whileHover={{ boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)' }}
+              >
+                {loading ? (
+                  <div className="min-h-96 flex flex-col items-center justify-center p-8">
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                      className="text-6xl mb-4"
+                    >
+                      ⏳
+                    </motion.div>
+                    <h2 className="text-2xl font-bold text-navy-blue mb-2">Loading...</h2>
+                    <p className="text-gray-600">Checking live status</p>
+                  </div>
+                ) : isLive && youtubeVideoId ? (
+                  <div className="space-y-6">
+                    <div className="aspect-video bg-black relative">
+                      <iframe
+                        width="100%"
+                        height="100%"
+                        src={`https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&rel=0`}
+                        title="Live Stream"
+                        frameBorder="0"
+                        allow="autoplay; encrypted-media; fullscreen"
+                        allowFullScreen
+                        className="absolute inset-0 w-full h-full"
+                      />
+                      
+                      <motion.div
+                        className="absolute top-4 right-4 bg-red-600 text-white px-4 py-2 rounded-full font-bold flex items-center space-x-2 z-10"
+                        animate={{ opacity: [1, 0.7, 1] }}
+                        transition={{ duration: 1, repeat: Infinity }}
+                      >
+                        <span className="w-2 h-2 bg-white rounded-full"></span>
+                        <span>LIVE</span>
+                      </motion.div>
+                    </div>
 
-                <div className="p-6 border-t">
-                  <h2 className="text-2xl font-bold text-navy-blue mb-2">{matchTitle}</h2>
-                  <p className="text-gray-600">Tune in to watch the action unfold live!</p>
-                </div>
+                    <div className="p-6 border-t">
+                      <h2 className="text-2xl font-bold text-navy-blue mb-2">{matchTitle}</h2>
+                      <p className="text-gray-600">Tune in to watch the action unfold live!</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="min-h-96 flex flex-col items-center justify-center p-8">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.5 }}
+                      className="text-6xl mb-4"
+                    >
+                      📺
+                    </motion.div>
+                    <h2 className="text-3xl font-bold text-navy-blue mb-2">No Live Match Currently</h2>
+                    <p className="text-gray-600 text-center max-w-md mb-6">
+                      Check back soon for upcoming live broadcasts. Visit our matches page to see scheduled games.
+                    </p>
+                    <motion.div
+                      className="text-sm text-gray-500"
+                      animate={{ opacity: [0.5, 1, 0.5] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      Waiting for the next broadcast...
+                    </motion.div>
+                  </div>
+                )}
+              </motion.div>
+            </div>
 
-                <div className="p-6 bg-gray-50 border-t">
-                  <p className="text-center text-gray-500">
-                    💬 Live chat and interactions coming soon
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="min-h-96 flex flex-col items-center justify-center p-8">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ duration: 0.5 }}
-                  className="text-6xl mb-4"
-                >
-                  📺
-                </motion.div>
-                <h2 className="text-3xl font-bold text-navy-blue mb-2">No Live Match Currently</h2>
-                <p className="text-gray-600 text-center max-w-md mb-6">
-                  Check back soon for upcoming live broadcasts. Visit our matches page to see scheduled games.
-                </p>
-                <motion.div
-                  className="text-sm text-gray-500"
-                  animate={{ opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                >
-                  Waiting for the next broadcast...
-                </motion.div>
-              </div>
-            )}
-          </motion.div>
+            <div className="lg:col-span-1">
+              <LiveChat isLive={isLive} />
+            </div>
+          </div>
 
           <div className="grid md:grid-cols-3 gap-6 mt-12">
             <motion.div
