@@ -474,11 +474,10 @@ httpServer.listen(PORT, HOST, () => {
   console.log(`📸 Uploads folder: ${uploadsDir}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
-c o n s t   c h a t U s e r s   =   n e w   M a p ( ) ;      
- c o n s t   c h a t M e s s a g e s   =   [ ] ;      
- c o n s t   M A X _ M E S S A G E S   =   1 0 0 ;    
+c o n s t   c h a t U s e r s   =   n e w   M a p ( ) ;     
  
-
+ c o n s t   c h a t M e s s a g e s   =   [ ] ;     
+ 
 
 // Chat system variables
 const chatUsers = new Map();
