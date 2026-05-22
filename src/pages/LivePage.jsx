@@ -1,9 +1,50 @@
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useLiveStore } from '../store/index.js';
 import LiveBadge from '../components/LiveBadge.jsx';
+import { webrtcService } from '../services/webrtc.js';
 
 export default function LivePage() {
-  const { isLive, streamTitle } = useLiveStore();
+  const { isLive, streamTitle, setIsLive, setStreamTitle } = useLiveStore();
+  const videoRef = useRef(null);
+  const [loading, setLoading] = useState(true);
+  const [streamConnected, setStreamConnected] = useState(false);
+
+  useEffect(() => {
+    webrtcService.connect();
+
+    webrtcService.onLiveStateChange((state) => {
+      setIsLive(state.isLive);
+      setStreamTitle(state.streamTitle);
+      setLoading(false);
+
+      if (state.isLive && !streamConnected) {
+        connectToStream();
+      } else if (!state.isLive) {
+        setStreamConnected(false);
+        if (videoRef.current) {
+          videoRef.current.srcObject = null;
+        }
+      }
+    });
+
+    const connectToStream = async () => {
+      try {
+        await webrtcService.joinAsViewer((stream) => {
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            setStreamConnected(true);
+          }
+        });
+      } catch (error) {
+        console.error('Error connecting to stream:', error);
+      }
+    };
+
+    return () => {
+      webrtcService.disconnect();
+    };
+  }, [setIsLive, setStreamTitle, streamConnected]);
 
   return (
     <motion.div
@@ -36,11 +77,20 @@ export default function LivePage() {
               <div className="space-y-6">
                 {/* Stream Window */}
                 <div className="aspect-video bg-black relative">
-                  <div className="w-full h-full flex items-center justify-center flex-col">
-                    <div className="text-6xl mb-4">📹</div>
-                    <p className="text-white text-xl">Live Stream Active</p>
-                    <p className="text-gray-400 mt-2">{streamTitle || 'Live Match'}</p>
-                  </div>
+                  {streamConnected ? (
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center flex-col">
+                      <div className="text-6xl mb-4">📹</div>
+                      <p className="text-white text-xl">Connecting to stream...</p>
+                      <p className="text-gray-400 mt-2">{streamTitle || 'Live Match'}</p>
+                    </div>
+                  )}
                   
                   {/* Live Badge Overlay */}
                   <motion.div
@@ -65,6 +115,18 @@ export default function LivePage() {
                     💬 Live chat and interactions coming soon
                   </p>
                 </div>
+              </div>
+            ) : loading ? (
+              <div className="min-h-96 flex flex-col items-center justify-center p-8">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  className="text-6xl mb-4"
+                >
+                  ⏳
+                </motion.div>
+                <h2 className="text-2xl font-bold text-navy-blue mb-2">Loading...</h2>
+                <p className="text-gray-600">Checking live status</p>
               </div>
             ) : (
               <div className="min-h-96 flex flex-col items-center justify-center p-8">

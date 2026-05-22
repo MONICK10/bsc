@@ -1,7 +1,7 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useLiveStore } from '../../store/index.js';
-import { apiService } from '../../services/api.js';
+import { webrtcService } from '../../services/webrtc.js';
 
 export default function LiveControl() {
   const { isLive, streamTitle, setIsLive, setStreamTitle } = useLiveStore();
@@ -11,11 +11,21 @@ export default function LiveControl() {
   const [loading, setLoading] = useState(false);
   const [inputTitle, setInputTitle] = useState(streamTitle);
 
+  useEffect(() => {
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+      webrtcService.stopBroadcast();
+      webrtcService.disconnect();
+    };
+  }, [stream]);
+
   const handleConnectCamera = async () => {
     setLoading(true);
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: true,
+        video: { facingMode: 'environment' },
         audio: true,
       });
       setStream(mediaStream);
@@ -32,21 +42,28 @@ export default function LiveControl() {
   };
 
   const handleDisconnectCamera = () => {
+    if (isLive) {
+      handleStopLive();
+    }
     if (stream) {
       stream.getTracks().forEach((track) => track.stop());
       setStream(null);
     }
-    setCameraConnected(false);
-    if (isLive) {
-      handleStopLive();
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
     }
+    setCameraConnected(false);
   };
 
   const handleStartLive = async () => {
+    if (!stream) {
+      alert('Please connect camera first');
+      return;
+    }
     setLoading(true);
     try {
       const title = inputTitle || 'Live Match';
-      await apiService.startLiveStream(title);
+      await webrtcService.startBroadcast(stream, title);
       setIsLive(true);
       setStreamTitle(title);
     } catch (error) {
@@ -60,7 +77,7 @@ export default function LiveControl() {
   const handleStopLive = async () => {
     setLoading(true);
     try {
-      await apiService.stopLiveStream();
+      webrtcService.stopBroadcast();
       setIsLive(false);
       setStreamTitle('');
     } catch (error) {
