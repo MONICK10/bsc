@@ -26,7 +26,11 @@ class WebRTCService {
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionDelay: 1000,
-      reconnectionAttempts: 10
+      reconnectionAttempts: 10,
+      secure: true,
+      rejectUnauthorized: false,
+      upgrade: true,
+      rememberUpgrade: true
     });
 
     this.socket.on('connect', () => {
