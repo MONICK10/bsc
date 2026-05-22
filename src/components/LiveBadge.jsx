@@ -5,14 +5,14 @@ export default function LiveBadge({ isLive }) {
 
   return (
     <motion.div
-      className="inline-flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-full font-bold"
-      animate={{ opacity: [1, 0.6, 1] }}
-      transition={{ duration: 1, repeat: Infinity }}
+      className="badge-live"
+      animate={{ scale: [1, 1.08, 1] }}
+      transition={{ duration: 1.5, repeat: Infinity }}
     >
       <motion.span
-        className="w-3 h-3 bg-white rounded-full"
-        animate={{ scale: [1, 1.2, 1] }}
-        transition={{ duration: 1, repeat: Infinity }}
+        className="w-3 h-3 bg-white rounded-full inline-block mr-2"
+        animate={{ opacity: [1, 0.5, 1] }}
+        transition={{ duration: 1.5, repeat: Infinity }}
       />
       <span>LIVE</span>
     </motion.div>

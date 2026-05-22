@@ -7,51 +7,101 @@ export default function AchievementsPreview() {
   const previewAchievements = achievements.slice(0, 3);
 
   return (
-    <section className="py-16 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4">
+    <section className="section-padding bg-gradient-to-b from-white to-slate-50">
+      <div className="container-max">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.6 }}
+          className="space-y-12"
         >
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-4xl font-bold text-navy-blue">Recent Achievements</h2>
-            <Link
-              to="/achievements"
-              className="text-sky-blue font-semibold hover:text-navy-blue smooth-transition"
-            >
-              View Gallery →
-            </Link>
+          {/* Header */}
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div>
+              <p className="text-sky-blue font-semibold uppercase tracking-widest mb-2">
+                ✦ Gallery Highlights
+              </p>
+              <h2 className="text-4xl md:text-5xl font-oswald font-bold text-navy-blue">
+                Recent Achievements
+              </h2>
+            </div>
+            <motion.div whileHover={{ x: 4 }}>
+              <Link
+                to="/achievements"
+                className="inline-flex items-center space-x-2 text-sky-blue font-semibold hover:text-cyan-glow smooth-transition"
+              >
+                <span>Explore Gallery</span>
+                <span className="text-xl">→</span>
+              </Link>
+            </motion.div>
           </div>
 
+          {/* Achievements Grid */}
           {previewAchievements.length > 0 ? (
-            <div className="grid md:grid-cols-3 gap-6">
-              {previewAchievements.map((achievement) => (
+            <motion.div
+              className="grid md:grid-cols-3 gap-8"
+              variants={{
+                hidden: { opacity: 0 },
+                visible: {
+                  opacity: 1,
+                  transition: {
+                    staggerChildren: 0.1,
+                  },
+                },
+              }}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+            >
+              {previewAchievements.map((achievement, idx) => (
                 <motion.div
                   key={achievement.id}
-                  className="sports-card overflow-hidden hover-lift"
-                  whileHover={{ scale: 1.02 }}
+                  className="group cursor-pointer"
+                  variants={{
+                    hidden: { opacity: 0, y: 20 },
+                    visible: { opacity: 1, y: 0 },
+                  }}
+                  whileHover={{ y: -8 }}
                 >
-                  <img
-                    src={achievement.media_url}
-                    alt={achievement.title}
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="p-4">
-                    <h3 className="text-lg font-bold text-navy-blue mb-2">
+                  <div className="relative h-72 rounded-2xl overflow-hidden shadow-soft hover:shadow-soft-lg smooth-transition">
+                    {/* Image */}
+                    <img
+                      src={achievement.media_url}
+                      alt={achievement.title}
+                      className="w-full h-full object-cover group-hover:scale-110 smooth-transition-lg"
+                    />
+
+                    {/* Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 smooth-transition-lg flex flex-col justify-end p-6 text-white" />
+
+                    {/* Badge */}
+                    <div className="absolute top-4 right-4 badge-primary opacity-0 group-hover:opacity-100 smooth-transition">
+                      Featured
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="mt-4 space-y-2">
+                    <h3 className="text-lg font-bold text-navy-blue group-hover:text-sky-blue smooth-transition">
                       {achievement.title}
                     </h3>
-                    <p className="text-gray-600 text-sm line-clamp-2">
+                    <p className="text-slate-600 text-sm line-clamp-2 group-hover:text-slate-900 smooth-transition">
                       {achievement.description}
                     </p>
                   </div>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           ) : (
-            <div className="text-center py-12 bg-white rounded-lg">
-              <p className="text-gray-500 text-lg">No achievements yet. Check back soon!</p>
-            </div>
+            <motion.div
+              className="text-center py-12 rounded-2xl bg-slate-100"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+            >
+              <p className="text-slate-500 text-lg font-medium">
+                No achievements yet. Check back soon! 🏆
+              </p>
+            </motion.div>
           )}
         </motion.div>
       </div>

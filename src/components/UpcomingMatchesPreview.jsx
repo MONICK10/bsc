@@ -1,40 +1,103 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { useMatchesStore } from '../store/index.js';
-import MatchCard from './MatchCard.jsx';
+import { useState, useEffect } from 'react';
+import { fetchMatches } from '../services/matchesService.js';
+import ModernMatchCard from './ModernMatchCard.jsx';
 
 export default function UpcomingMatchesPreview() {
-  const { matches } = useMatchesStore();
-  const upcomingMatches = matches.slice(0, 3);
+  const [matches, setMatches] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadMatches();
+  }, []);
+
+  const loadMatches = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchMatches();
+      // Sort by date and get first 3
+      const sorted = (data || [])
+        .sort((a, b) => new Date(a.match_date) - new Date(b.match_date))
+        .slice(0, 3);
+      setMatches(sorted);
+    } catch (error) {
+      console.error('Load matches error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <section className="py-16">
-      <div className="max-w-7xl mx-auto px-4">
+    <section className="section-padding bg-gradient-to-b from-slate-50 to-white">
+      <div className="container-max">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.6 }}
+          className="space-y-12"
         >
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-4xl font-bold text-navy-blue">Upcoming Matches</h2>
-            <Link
-              to="/matches"
-              className="text-sky-blue font-semibold hover:text-navy-blue smooth-transition"
-            >
-              View All →
-            </Link>
+          {/* Header */}
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div>
+              <p className="text-sky-blue font-semibold uppercase tracking-widest mb-2">
+                ✦ Next Fixtures
+              </p>
+              <h2 className="text-4xl md:text-5xl font-oswald font-bold text-navy-blue">
+                Upcoming Matches
+              </h2>
+            </div>
+            <motion.div whileHover={{ x: 4 }}>
+              <Link
+                to="/upcoming-matches"
+                className="inline-flex items-center space-x-2 text-sky-blue font-semibold hover:text-cyan-glow smooth-transition"
+              >
+                <span>View All Matches</span>
+                <span className="text-xl">→</span>
+              </Link>
+            </motion.div>
           </div>
 
-          {upcomingMatches.length > 0 ? (
-            <div className="grid md:grid-cols-3 gap-6">
-              {upcomingMatches.map((match) => (
-                <MatchCard key={match.id} match={match} />
+          {/* Matches Grid */}
+          {loading ? (
+            <motion.div
+              className="flex items-center justify-center py-20"
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              <p className="text-lg text-slate-600">Loading matches...</p>
+            </motion.div>
+          ) : matches.length > 0 ? (
+            <motion.div
+              className="grid md:grid-cols-3 gap-8"
+              variants={{
+                hidden: { opacity: 0 },
+                visible: {
+                  opacity: 1,
+                  transition: {
+                    staggerChildren: 0.1,
+                  },
+                },
+              }}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+            >
+              {matches.map((match) => (
+                <ModernMatchCard key={match.id} match={match} isAdmin={false} />
               ))}
-            </div>
+            </motion.div>
           ) : (
-            <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-gray-500 text-lg">No upcoming matches scheduled</p>
-            </div>
+            <motion.div
+              className="text-center py-16 rounded-2xl bg-slate-100"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+            >
+              <div className="text-6xl mb-4">📅</div>
+              <p className="text-slate-600 text-lg font-medium">
+                No upcoming matches scheduled at this time
+              </p>
+            </motion.div>
           )}
         </motion.div>
       </div>

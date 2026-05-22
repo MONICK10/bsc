@@ -7,6 +7,7 @@ import HomePage from '../pages/HomePage.jsx';
 import AboutPage from '../pages/AboutPage.jsx';
 import AchievementsPage from '../pages/AchievementsPage.jsx';
 import MatchesPage from '../pages/MatchesPage.jsx';
+import UpcomingMatchesPage from '../pages/UpcomingMatchesPage.jsx';
 import LivePage from '../pages/LivePage.jsx';
 import AdminLoginPage from '../pages/AdminLoginPage.jsx';
 import AdminDashboard from '../pages/AdminDashboard.jsx';
@@ -40,6 +41,10 @@ export const router = createBrowserRouter([
       {
         path: 'matches',
         element: <MatchesPage />,
+      },
+      {
+        path: 'upcoming-matches',
+        element: <UpcomingMatchesPage />,
       },
       {
         path: 'live',

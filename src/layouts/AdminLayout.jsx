@@ -1,4 +1,5 @@
 import { Outlet, Navigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAuthStore } from '../store/index.js';
 import AdminSidebar from '../components/AdminSidebar.jsx';
 
@@ -10,12 +11,17 @@ export default function AdminLayout() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-slate-50">
       <AdminSidebar />
       <main className="flex-1 overflow-auto">
-        <div className="p-8">
+        <motion.div
+          className="p-6 md:p-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
           <Outlet />
-        </div>
+        </motion.div>
       </main>
     </div>
   );

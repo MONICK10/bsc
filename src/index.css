@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&family=Oswald:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,29 +10,70 @@
   box-sizing: border-box;
 }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
 html {
   scroll-behavior: smooth;
 }
 
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #ffffff;
+  color: #1e293b;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* Hero & Large Headings */
+h1 {
+  font-size: clamp(2rem, 5vw, 3.75rem);
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 0.05em;
+  font-weight: 400;
+}
+
+/* Section Headings */
+h2 {
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  font-family: 'Oswald', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Subsection Headings */
+h3 {
+  font-size: clamp(1.25rem, 3vw, 1.875rem);
+  font-family: 'Poppins', sans-serif;
+}
+
 /* Utility classes */
 .glass-effect {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.75rem;
+}
+
+.glass-effect-dark {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(14, 165, 233, 0.2);
+  border-radius: 0.75rem;
 }
 
 .smooth-transition {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.smooth-transition-lg {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Gradient Utilities */
 .gradient-text {
   background: linear-gradient(135deg, #0EA5E9 0%, #001F3F 100%);
   -webkit-background-clip: text;
@@ -38,17 +81,100 @@ html {
   background-clip: text;
 }
 
-.hover-lift {
-  @apply smooth-transition hover:shadow-lg hover:-translate-y-1;
+.gradient-text-cyan {
+  background: linear-gradient(135deg, #06B6D4 0%, #0EA5E9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
+/* Card Styles */
 .sports-card {
-  @apply rounded-lg border border-slate-200 bg-white shadow-md smooth-transition hover:shadow-xl hover:border-sky-blue;
+  @apply rounded-xl border border-slate-200 bg-white shadow-soft smooth-transition;
+  @apply hover:shadow-soft-lg hover:border-sky-blue hover:scale-105;
+}
+
+.sports-card-dark {
+  @apply rounded-xl border border-slate-700 bg-slate-900 shadow-dark smooth-transition;
+  @apply hover:shadow-glow-lg hover:border-cyan-glow;
+}
+
+.premium-card {
+  @apply rounded-2xl bg-gradient-to-br from-white to-slate-50 border border-slate-100;
+  @apply shadow-soft backdrop-blur-md smooth-transition;
+  @apply hover:shadow-soft-lg hover:from-slate-50 hover:to-white;
+}
+
+/* Button Styles */
+.btn-primary {
+  @apply px-6 py-3 bg-gradient-to-r from-sky-blue to-cyan-glow text-white rounded-xl font-semibold;
+  @apply smooth-transition hover:shadow-glow hover:scale-105;
+  @apply active:scale-95;
+}
+
+.btn-secondary {
+  @apply px-6 py-3 bg-gradient-to-r from-navy-blue to-slate-900 text-white rounded-xl font-semibold;
+  @apply smooth-transition hover:shadow-dark hover:scale-105;
+  @apply active:scale-95;
+}
+
+.btn-outline {
+  @apply px-6 py-3 border-2 border-sky-blue text-sky-blue rounded-xl font-semibold;
+  @apply smooth-transition hover:bg-sky-blue hover:text-white;
+  @apply active:scale-95;
+}
+
+.btn-ghost {
+  @apply px-6 py-3 text-sky-blue font-semibold rounded-xl;
+  @apply smooth-transition hover:bg-sky-blue hover:text-white;
+  @apply active:scale-95;
+}
+
+/* Hover Effects */
+.hover-lift {
+  @apply smooth-transition hover:shadow-soft-lg hover:-translate-y-2;
+}
+
+.hover-glow {
+  @apply smooth-transition hover:shadow-glow;
+}
+
+.hover-scale {
+  @apply smooth-transition hover:scale-110;
+}
+
+/* Badge Styles */
+.badge-primary {
+  @apply inline-flex items-center px-4 py-2 bg-gradient-to-r from-sky-blue to-cyan-glow;
+  @apply text-white rounded-full font-semibold text-sm;
+}
+
+.badge-success {
+  @apply inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-full font-semibold text-sm;
+}
+
+.badge-live {
+  @apply inline-flex items-center px-3 py-1 bg-red-600 text-white rounded-full font-bold text-xs;
+  @apply animate-glow;
+}
+
+/* Section Spacing */
+.section-padding {
+  @apply py-16 md:py-24;
+}
+
+.section-padding-lg {
+  @apply py-20 md:py-32;
+}
+
+.container-max {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
 }
 
 /* Scrollbar styles */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
@@ -56,10 +182,63 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #0EA5E9;
-  border-radius: 4px;
+  background: linear-gradient(180deg, #0EA5E9 0%, #06B6D4 100%);
+  border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #001F3F;
+  background: linear-gradient(180deg, #001F3F 0%, #0EA5E9 100%);
+}
+
+/* Input Styles */
+input, textarea, select {
+  @apply rounded-lg border-2 border-slate-200 px-4 py-2 font-inter;
+  @apply focus:outline-none focus:border-sky-blue focus:shadow-glow smooth-transition;
+  @apply placeholder-slate-400;
+}
+
+/* Responsive Typography */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+  
+  h3 {
+    font-size: 1.25rem;
+  }
+}
+
+/* Animations */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+/* Utility for loading shimmer effect */
+.shimmer-loading {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Sports Theme Gradients */
+.sports-gradient {
+  @apply bg-gradient-to-r from-sky-blue via-cyan-glow to-navy-blue;
+}
+
+.sports-gradient-alt {
+  @apply bg-gradient-to-br from-navy-blue to-slate-900;
+}
+
+/* Responsive Grid */
+.grid-responsive {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
 }

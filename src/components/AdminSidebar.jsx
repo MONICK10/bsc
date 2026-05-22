@@ -23,44 +23,66 @@ export default function AdminSidebar() {
 
   return (
     <motion.div
-      className="w-64 bg-navy-blue text-white shadow-xl"
+      className="w-64 bg-gradient-to-b from-slate-dark to-navy-blue text-white shadow-dark border-r border-cyan-glow/20 flex flex-col"
       initial={{ x: -250 }}
       animate={{ x: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="p-6 border-b border-blue-700">
-        <Link to="/" className="flex items-center space-x-2 text-2xl font-bold">
-          <img src="/images/logo.png" alt="Bearhatty Logo" className="h-12 w-12" />
-          <span>Bearhatty</span>
+      {/* Header */}
+      <div className="p-6 border-b border-cyan-glow/20">
+        <Link to="/" className="flex items-center space-x-3 mb-3">
+          <img
+            src="/images/logo.png"
+            alt="Bearhatty Logo"
+            className="h-12 w-12 rounded-full shadow-glow"
+          />
+          <div>
+            <p className="text-lg font-bebas tracking-wider gradient-text">BEARHATTY</p>
+            <p className="text-xs text-cyan-glow">Admin Panel</p>
+          </div>
         </Link>
-        <p className="text-blue-300 text-sm mt-2">Admin Panel</p>
       </div>
 
-      <nav className="p-4 space-y-2">
+      {/* Navigation */}
+      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         {navItems.map((item) => (
-          <Link
+          <motion.div
             key={item.path}
-            to={item.path}
-            className={`flex items-center space-x-3 px-4 py-3 rounded-lg smooth-transition ${
-              isActive(item.path)
-                ? 'bg-sky-blue text-white'
-                : 'text-blue-200 hover:bg-blue-700'
-            }`}
+            whileHover={{ x: 4 }}
           >
-            <span className="text-xl">{item.icon}</span>
-            <span className="font-semibold">{item.label}</span>
-          </Link>
+            <Link
+              to={item.path}
+              className={`flex items-center space-x-3 px-4 py-3 rounded-xl smooth-transition group ${
+                isActive(item.path)
+                  ? 'bg-gradient-to-r from-sky-blue to-cyan-glow text-white shadow-glow'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+              }`}
+            >
+              <span className="text-2xl">{item.icon}</span>
+              <span className="font-semibold">{item.label}</span>
+              {isActive(item.path) && (
+                <motion.div
+                  className="ml-auto w-2 h-2 rounded-full bg-white"
+                  layoutId="indicator"
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                />
+              )}
+            </Link>
+          </motion.div>
         ))}
       </nav>
 
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-blue-700 bg-navy-blue">
-        <button
+      {/* Logout Button */}
+      <div className="p-4 border-t border-cyan-glow/20">
+        <motion.button
           onClick={handleLogout}
-          className="w-full flex items-center space-x-2 px-4 py-3 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 smooth-transition text-left"
+          className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold smooth-transition hover:shadow-glow"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
-          <span>🚪</span>
+          <span className="text-xl">🚪</span>
           <span>Logout</span>
-        </button>
+        </motion.button>
       </div>
     </motion.div>
   );

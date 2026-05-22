@@ -1,221 +1,208 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useLiveStore } from '../store/index.js';
-import LiveBadge from '../components/LiveBadge.jsx';
-import { webrtcService } from '../services/webrtc.js';
+import { liveService } from '../services/liveService.js';
 
 export default function LivePage() {
-  const { isLive, streamTitle, setIsLive, setStreamTitle } = useLiveStore();
-  const videoRef = useRef(null);
+  const [liveData, setLiveData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [streamConnected, setStreamConnected] = useState(false);
-  const hasJoinedRef = useRef(false);
+  const [isLive, setIsLive] = useState(false);
 
   useEffect(() => {
-    console.log('LivePage mounted');
-    webrtcService.connect();
+    loadLiveStatus();
+    // Poll every 3 seconds to check if live
+    const interval = setInterval(loadLiveStatus, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
-    webrtcService.onLiveStateChange((state) => {
-      console.log('Live state received:', state);
-      setIsLive(state.isLive);
-      setStreamTitle(state.streamTitle);
+  const loadLiveStatus = async () => {
+    try {
+      const status = await liveService.fetchLiveStatus();
+      setLiveData(status);
+      setIsLive(status.isLive);
+    } catch (error) {
+      console.error('Failed to load live status:', error);
+    } finally {
       setLoading(false);
+    }
+  };
 
-      if (state.isLive && !hasJoinedRef.current) {
-        console.log('Stream is live, joining as viewer');
-        hasJoinedRef.current = true;
-        connectToStream();
-      } else if (!state.isLive) {
-        console.log('Stream is offline');
-        hasJoinedRef.current = false;
-        setStreamConnected(false);
-        if (videoRef.current) {
-          videoRef.current.srcObject = null;
-        }
-      }
-    });
-
-    const connectToStream = async () => {
-      console.log('Connecting to stream...');
-      try {
-        await webrtcService.joinAsViewer((stream) => {
-          console.log('✅ Stream received in LivePage:', stream);
-          console.log('Video tracks:', stream.getVideoTracks());
-          console.log('Audio tracks:', stream.getAudioTracks());
-          
-          if (videoRef.current) {
-            console.log('Attaching stream to video element');
-            videoRef.current.srcObject = stream;
-            
-            videoRef.current.onloadedmetadata = () => {
-              console.log('Video metadata loaded');
-              videoRef.current.play().then(() => {
-                console.log('✅ Video playback started');
-                setStreamConnected(true);
-              }).catch(err => {
-                console.error('Video play error:', err);
-              });
-            };
-          } else {
-            console.error('videoRef.current is null');
-          }
-        });
-      } catch (error) {
-        console.error('Error connecting to stream:', error);
-      }
-    };
-
-    return () => {
-      console.log('LivePage unmounting');
-      hasJoinedRef.current = false;
-      webrtcService.disconnect();
-    };
-  }, [setIsLive, setStreamTitle]);
+  if (loading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="min-h-screen bg-gradient-to-b from-slate-900 to-black flex items-center justify-center"
+      >
+        <div className="text-center">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="inline-block mb-4"
+          >
+            <div className="w-16 h-16 border-4 border-cyan-glow border-t-transparent rounded-full"></div>
+          </motion.div>
+          <p className="text-white text-xl">Loading broadcast...</p>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
-      className="min-h-screen bg-gray-50"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
+      className="min-h-screen bg-gradient-to-b from-slate-900 to-black"
     >
       {/* Header */}
-      <section className="bg-gradient-to-r from-sky-blue to-navy-blue text-white py-12">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold mb-2">Live Broadcast</h1>
-              <p className="text-blue-100">Watch our matches live</p>
-            </div>
-            <LiveBadge isLive={isLive} />
-          </div>
-        </div>
-      </section>
-
-      {/* Live Stream Container */}
-      <section className="py-16">
-        <div className="max-w-6xl mx-auto px-4">
+      <div className="bg-black/50 backdrop-blur-md border-b border-cyan-glow/30">
+        <div className="container-max py-6">
           <motion.div
-            className="bg-white rounded-lg shadow-xl overflow-hidden"
-            whileHover={{ boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)' }}
+            initial={{ y: -20 }}
+            animate={{ y: 0 }}
+            className="flex items-center justify-between"
           >
-            {isLive ? (
-              <div className="space-y-6">
-                {/* Stream Window */}
-                <div className="aspect-video bg-black relative">
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    controls
-                    className={`w-full h-full object-cover ${!streamConnected ? 'hidden' : ''}`}
-                  />
-                  {!streamConnected && (
-                    <div className="absolute inset-0 flex items-center justify-center flex-col">
-                      <div className="text-6xl mb-4">📹</div>
-                      <p className="text-white text-xl">Connecting to stream...</p>
-                      <p className="text-gray-400 mt-2">{streamTitle || 'Live Match'}</p>
-                    </div>
-                  )}
-                  
-                  {/* Live Badge Overlay */}
-                  <motion.div
-                    className="absolute top-4 right-4 bg-red-600 text-white px-4 py-2 rounded-full font-bold flex items-center space-x-2"
-                    animate={{ opacity: [1, 0.7, 1] }}
-                    transition={{ duration: 1, repeat: Infinity }}
-                  >
-                    <span className="w-2 h-2 bg-white rounded-full"></span>
-                    <span>LIVE</span>
-                  </motion.div>
-                </div>
-
-                {/* Stream Info */}
-                <div className="p-6 border-t">
-                  <h2 className="text-2xl font-bold text-navy-blue mb-2">{streamTitle || 'Live Match'}</h2>
-                  <p className="text-gray-600">Tune in to watch the action unfold live!</p>
-                </div>
-
-                {/* Chat/Controls */}
-                <div className="p-6 bg-gray-50 border-t">
-                  <p className="text-center text-gray-500">
-                    💬 Live chat and interactions coming soon
-                  </p>
-                </div>
-              </div>
-            ) : loading ? (
-              <div className="min-h-96 flex flex-col items-center justify-center p-8">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                  className="text-6xl mb-4"
-                >
-                  ⏳
-                </motion.div>
-                <h2 className="text-2xl font-bold text-navy-blue mb-2">Loading...</h2>
-                <p className="text-gray-600">Checking live status</p>
-              </div>
-            ) : (
-              <div className="min-h-96 flex flex-col items-center justify-center p-8">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ duration: 0.5 }}
-                  className="text-6xl mb-4"
-                >
-                  📺
-                </motion.div>
-                <h2 className="text-3xl font-bold text-navy-blue mb-2">No Live Match Currently</h2>
-                <p className="text-gray-600 text-center max-w-md mb-6">
-                  Check back soon for upcoming live broadcasts. Visit our matches page to see scheduled games.
-                </p>
-                <motion.div
-                  className="text-sm text-gray-500"
-                  animate={{ opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                >
-                  Waiting for the next broadcast...
-                </motion.div>
-              </div>
+            <div className="flex items-center gap-4">
+              <div className="text-4xl">📺</div>
+              <h1 className="text-3xl md:text-4xl font-bebas text-white tracking-wider">
+                LIVE BROADCAST
+              </h1>
+            </div>
+            {isLive && (
+              <motion.div
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 1, repeat: Infinity }}
+                className="flex items-center gap-2 bg-red-600 px-6 py-3 rounded-full"
+              >
+                <span className="w-3 h-3 bg-white rounded-full animate-pulse"></span>
+                <span className="text-white font-bold">LIVE</span>
+              </motion.div>
             )}
           </motion.div>
-
-          {/* Info Cards */}
-          <div className="grid md:grid-cols-3 gap-6 mt-12">
-            <motion.div
-              className="bg-white rounded-lg p-6 shadow-md"
-              whileHover={{ y: -5 }}
-            >
-              <div className="text-4xl mb-3">⏰</div>
-              <h3 className="font-bold text-navy-blue mb-2">Schedule</h3>
-              <p className="text-gray-600 text-sm">
-                Check the matches page to find when the next game will be broadcast live.
-              </p>
-            </motion.div>
-
-            <motion.div
-              className="bg-white rounded-lg p-6 shadow-md"
-              whileHover={{ y: -5 }}
-            >
-              <div className="text-4xl mb-3">🎥</div>
-              <h3 className="font-bold text-navy-blue mb-2">HD Quality</h3>
-              <p className="text-gray-600 text-sm">
-                Enjoy crystal-clear HD streaming of all our matches.
-              </p>
-            </motion.div>
-
-            <motion.div
-              className="bg-white rounded-lg p-6 shadow-md"
-              whileHover={{ y: -5 }}
-            >
-              <div className="text-4xl mb-3">🌍</div>
-              <h3 className="font-bold text-navy-blue mb-2">Accessible Anywhere</h3>
-              <p className="text-gray-600 text-sm">
-                Watch live matches from any device, anywhere in the world.
-              </p>
-            </motion.div>
-          </div>
         </div>
-      </section>
+      </div>
+
+      {/* Main Content */}
+      <div className="container-max py-8 md:py-12">
+        {isLive && liveData?.youtubeVideoId ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="space-y-8"
+          >
+            {/* Match Title */}
+            <motion.div
+              initial={{ y: -20 }}
+              animate={{ y: 0 }}
+              className="text-center space-y-2"
+            >
+              <p className="text-cyan-glow font-semibold uppercase tracking-widest">
+                ✦ Now Broadcasting
+              </p>
+              <h2 className="text-3xl md:text-4xl font-bold text-white">
+                {liveData.matchTitle}
+              </h2>
+            </motion.div>
+
+            {/* Video Player */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="relative"
+            >
+              {/* Aspect ratio container 16:9 */}
+              <div className="relative w-full bg-black rounded-2xl overflow-hidden shadow-2xl"
+                style={{ paddingBottom: '56.25%' }}>
+                <iframe
+                  className="absolute top-0 left-0 w-full h-full"
+                  src={`https://www.youtube.com/embed/${liveData.youtubeVideoId}?autoplay=1&rel=0&controls=1&modestbranding=1`}
+                  title="Live Stream"
+                  frameBorder="0"
+                  allow="autoplay; encrypted-media; fullscreen"
+                  allowFullScreen
+                  loading="lazy"
+                />
+              </div>
+
+              {/* Stream Info */}
+              <motion.div
+                initial={{ y: 20 }}
+                animate={{ y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="mt-6 grid md:grid-cols-2 gap-6"
+              >
+                <div className="bg-gradient-to-br from-blue-900/50 to-blue-800/50 rounded-xl p-6 border border-blue-700/50">
+                  <p className="text-cyan-glow font-semibold text-sm mb-2">📊 Stream Status</p>
+                  <p className="text-white text-lg font-bold">STREAMING LIVE</p>
+                  <p className="text-white/70 text-sm mt-1">
+                    Watch full HD broadcast without leaving our website
+                  </p>
+                </div>
+
+                <div className="bg-gradient-to-br from-purple-900/50 to-purple-800/50 rounded-xl p-6 border border-purple-700/50">
+                  <p className="text-cyan-glow font-semibold text-sm mb-2">💬 Features</p>
+                  <ul className="text-white/80 text-sm space-y-1">
+                    <li>✓ Fullscreen mode</li>
+                    <li>✓ HD quality</li>
+                    <li>✓ Live chat available</li>
+                  </ul>
+                </div>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="py-24 text-center"
+          >
+            <motion.div
+              animate={{ y: [0, -10, 0] }}
+              transition={{ duration: 3, repeat: Infinity }}
+              className="text-8xl md:text-9xl mb-6"
+            >
+              📺
+            </motion.div>
+            <h2 className="text-4xl md:text-5xl font-bebas text-white mb-4">
+              NO LIVE MATCH CURRENTLY
+            </h2>
+            <p className="text-cyan-glow text-lg mb-8 max-w-2xl mx-auto">
+              Check back soon for the next exciting Bearhatty Sports Club match!
+            </p>
+
+            {/* Info Cards */}
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto"
+            >
+              <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-6 border border-slate-700">
+                <p className="text-4xl mb-3">⚽</p>
+                <p className="text-white font-bold mb-2">Football</p>
+                <p className="text-white/70 text-sm">
+                  Watch Bearhatty SC compete in action-packed football matches
+                </p>
+              </div>
+
+              <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-6 border border-slate-700">
+                <p className="text-4xl mb-3">🏒</p>
+                <p className="text-white font-bold mb-2">Hockey</p>
+                <p className="text-white/70 text-sm">
+                  Experience thrilling hockey tournaments and championship games
+                </p>
+              </div>
+            </motion.div>
+
+            <div className="mt-12 p-6 bg-blue-900/30 border border-blue-700/50 rounded-xl max-w-2xl mx-auto">
+              <p className="text-cyan-glow font-semibold mb-2">📅 Upcoming Matches</p>
+              <p className="text-white/80">
+                Check our <strong>Upcoming Matches</strong> page to see scheduled games and set reminders
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </div>
     </motion.div>
   );
 }

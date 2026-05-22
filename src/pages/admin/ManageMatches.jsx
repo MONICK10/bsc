@@ -1,185 +1,236 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useMatchesStore } from '../../store/index.js';
-import { apiService } from '../../services/api.js';
+import {
+  fetchMatches,
+  createMatch,
+  updateMatch,
+  deleteMatch,
+} from '../../services/matchesService.js';
+import MatchForm from '../../components/admin/MatchForm.jsx';
+import ModernMatchCard from '../../components/ModernMatchCard.jsx';
 
 export default function ManageMatches() {
-  const { matches, addMatch, deleteMatch, updateMatch } = useMatchesStore();
+  const { matches, setMatches, setLoading, loading } = useMatchesStore();
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({
-    opponent: '',
-    date: '',
-    venue: '',
-    sport: 'Football',
-    time: '',
-  });
+  const [editingMatch, setEditingMatch] = useState(null);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('');
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  useEffect(() => {
+    loadMatches();
+  }, []);
+
+  const loadMatches = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchMatches();
+      setMatches(data || []);
+    } catch (error) {
+      console.error('Load matches error:', error);
+      showToast('Failed to load matches', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const showToast = (message, type = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setTimeout(() => setToastMessage(''), 3000);
+  };
+
+  const handleCreateMatch = async (matchData, team1File, team2File) => {
+    setLoading(true);
     try {
-      if (editingId) {
-        const updated = await apiService.updateMatch(editingId, formData);
-        updateMatch(editingId, updated);
-      } else {
-        const created = await apiService.createMatch(formData);
-        addMatch(created);
-      }
-      setFormData({ opponent: '', date: '', venue: '', sport: 'Football', time: '' });
+      const newMatch = await createMatch(matchData, team1File, team2File);
+      setMatches([...matches, newMatch]);
+      showToast('✅ Match created successfully!', 'success');
       setShowForm(false);
-      setEditingId(null);
+      loadMatches(); // Refresh to ensure consistency
     } catch (error) {
-      console.error('Error saving match:', error);
+      console.error('Create match error:', error);
+      showToast('❌ Failed to create match. Please try again.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditMatch = async (matchData, team1File, team2File) => {
+    setLoading(true);
+    try {
+      const updated = await updateMatch(editingMatch.id, matchData, team1File, team2File);
+      setMatches(
+        matches.map((m) => (m.id === editingMatch.id ? updated : m))
+      );
+      showToast('✅ Match updated successfully!', 'success');
+      setEditingMatch(null);
+      setShowForm(false);
+      loadMatches(); // Refresh to ensure consistency
+    } catch (error) {
+      console.error('Update match error:', error);
+      showToast('❌ Failed to update match. Please try again.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteMatch = async (matchId) => {
+    if (!confirm('Are you sure you want to delete this match? This action cannot be undone.')) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await deleteMatch(matchId);
+      setMatches(matches.filter((m) => m.id !== matchId));
+      showToast('✅ Match deleted successfully!', 'success');
+    } catch (error) {
+      console.error('Delete match error:', error);
+      showToast('❌ Failed to delete match. Please try again.', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleEdit = (match) => {
-    setFormData(match);
-    setEditingId(match.id);
+    setEditingMatch(match);
     setShowForm(true);
-  };
-
-  const handleDelete = async (id) => {
-    if (confirm('Are you sure you want to delete this match?')) {
-      try {
-        await apiService.deleteMatch(id);
-        deleteMatch(id);
-      } catch (error) {
-        console.error('Error deleting match:', error);
-      }
-    }
   };
 
   const handleCancel = () => {
     setShowForm(false);
-    setEditingId(null);
-    setFormData({ opponent: '', date: '', venue: '', sport: 'Football', time: '' });
+    setEditingMatch(null);
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-navy-blue">Manage Matches</h1>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-sky-blue text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-600 smooth-transition"
+    <motion.div
+      className="space-y-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+    >
+      {/* Toast Notification */}
+      {toastMessage && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className={`fixed top-20 left-4 right-4 md:left-auto md:right-4 md:w-96 p-4 rounded-xl font-semibold z-50 ${
+            toastType === 'success'
+              ? 'bg-green-600 text-white'
+              : 'bg-red-600 text-white'
+          }`}
         >
-          {showForm ? '✕ Cancel' : '+ Add Match'}
-        </button>
-      </div>
+          {toastMessage}
+        </motion.div>
+      )}
 
-      {/* Add/Edit Form */}
+      {/* Header */}
+      <motion.div
+        className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+        initial={{ y: -30 }}
+        animate={{ y: 0 }}
+      >
+        <div>
+          <h1 className="text-5xl font-bebas tracking-wider text-navy-blue">
+            MANAGE MATCHES
+          </h1>
+          <p className="text-cyan-glow font-semibold mt-2">
+            Add, edit, and manage upcoming matches
+          </p>
+        </div>
+        {!showForm && (
+          <motion.button
+            onClick={() => setShowForm(true)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="btn-primary px-8 py-3 text-lg font-bold whitespace-nowrap"
+          >
+            ⚽ Add New Match
+          </motion.button>
+        )}
+      </motion.div>
+
+      {/* Form Section */}
       {showForm && (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg shadow-md p-6 mb-8"
+          className="premium-card p-8 md:p-12 space-y-6"
         >
-          <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-4">
-            <input
-              type="text"
-              name="opponent"
-              placeholder="Opponent Team"
-              value={formData.opponent}
-              onChange={handleInputChange}
-              required
-              className="border border-gray-300 rounded p-2"
-            />
-            <input
-              type="date"
-              name="date"
-              value={formData.date}
-              onChange={handleInputChange}
-              required
-              className="border border-gray-300 rounded p-2"
-            />
-            <input
-              type="text"
-              name="venue"
-              placeholder="Venue"
-              value={formData.venue}
-              onChange={handleInputChange}
-              required
-              className="border border-gray-300 rounded p-2"
-            />
-            <input
-              type="time"
-              name="time"
-              value={formData.time}
-              onChange={handleInputChange}
-              required
-              className="border border-gray-300 rounded p-2"
-            />
-            <select
-              name="sport"
-              value={formData.sport}
-              onChange={handleInputChange}
-              className="border border-gray-300 rounded p-2"
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-3xl font-oswald font-bold text-navy-blue">
+              {editingMatch ? 'Edit Match' : 'Create New Match'}
+            </h2>
+            <motion.button
+              onClick={handleCancel}
+              whileHover={{ scale: 1.1 }}
+              className="text-3xl hover:text-red-600"
             >
-              <option>Football</option>
-              <option>Hockey</option>
-            </select>
-            <div className="flex gap-2">
-              <button
-                type="submit"
-                className="flex-1 bg-green-500 text-white rounded p-2 font-semibold hover:bg-green-600"
-              >
-                {editingId ? 'Update' : 'Add'} Match
-              </button>
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="flex-1 bg-gray-500 text-white rounded p-2 font-semibold hover:bg-gray-600"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
+              ✕
+            </motion.button>
+          </div>
+
+          <MatchForm
+            onSubmit={editingMatch ? handleEditMatch : handleCreateMatch}
+            initialData={editingMatch}
+            isLoading={loading}
+          />
         </motion.div>
       )}
 
-      {/* Matches List */}
-      <div className="grid gap-4">
+      {/* Matches Grid */}
+      <motion.div
+        className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
         {matches.length > 0 ? (
           matches.map((match) => (
-            <motion.div
+            <ModernMatchCard
               key={match.id}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="bg-white rounded-lg shadow p-6 flex justify-between items-center"
-            >
-              <div className="flex-1">
-                <h3 className="font-bold text-lg text-navy-blue">{match.opponent}</h3>
-                <p className="text-gray-600">
-                  {match.sport} • {match.date} at {match.time}
-                </p>
-                <p className="text-gray-600 text-sm">{match.venue}</p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleEdit(match)}
-                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(match.id)}
-                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-                >
-                  Delete
-                </button>
-              </div>
-            </motion.div>
+              match={match}
+              onEdit={handleEdit}
+              onDelete={handleDeleteMatch}
+              isAdmin={true}
+            />
           ))
         ) : (
-          <p className="text-gray-500 text-center py-8">No matches yet. Add one to get started!</p>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="col-span-full text-center py-16 premium-card"
+          >
+            <p className="text-6xl mb-4">⚽</p>
+            <p className="text-slate-600 text-xl">No matches yet</p>
+            <p className="text-slate-500 text-lg mt-2">
+              Click "Add New Match" to schedule your first match
+            </p>
+          </motion.div>
         )}
-      </div>
-    </div>
+      </motion.div>
+
+      {/* Info Section */}
+      {matches.length > 0 && (
+        <motion.div
+          className="glass-effect border-2 border-cyan-glow/30 rounded-xl p-6 text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <p className="text-slate-600">
+            Total Matches: <span className="font-bold text-navy-blue text-lg">{matches.length}</span>
+          </p>
+          <p className="text-sm text-slate-500 mt-2">
+            All changes are automatically reflected on the homepage and upcoming matches page
+          </p>
+        </motion.div>
+      )}
+    </motion.div>
   );
 }
