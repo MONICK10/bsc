@@ -28,18 +28,6 @@ export default function AdminLoginPage() {
         </div>
 
         <LoginForm />
-
-        <div className="mt-8 pt-8 border-t">
-          <p className="text-center text-gray-600 text-sm mb-4">Demo Credentials</p>
-          <div className="bg-gray-50 p-4 rounded text-sm">
-            <p className="text-gray-700 mb-2">
-              <strong>Email:</strong> admin@bearhatty.com
-            </p>
-            <p className="text-gray-700">
-              <strong>Password:</strong> admin123
-            </p>
-          </div>
-        </div>
       </motion.div>
     </motion.div>
   );
