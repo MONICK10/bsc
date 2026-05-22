@@ -9,18 +9,25 @@ export default function LivePage() {
   const videoRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [streamConnected, setStreamConnected] = useState(false);
+  const hasJoinedRef = useRef(false);
 
   useEffect(() => {
+    console.log('LivePage mounted');
     webrtcService.connect();
 
     webrtcService.onLiveStateChange((state) => {
+      console.log('Live state received:', state);
       setIsLive(state.isLive);
       setStreamTitle(state.streamTitle);
       setLoading(false);
 
-      if (state.isLive && !streamConnected) {
+      if (state.isLive && !hasJoinedRef.current) {
+        console.log('Stream is live, joining as viewer');
+        hasJoinedRef.current = true;
         connectToStream();
       } else if (!state.isLive) {
+        console.log('Stream is offline');
+        hasJoinedRef.current = false;
         setStreamConnected(false);
         if (videoRef.current) {
           videoRef.current.srcObject = null;
@@ -29,11 +36,28 @@ export default function LivePage() {
     });
 
     const connectToStream = async () => {
+      console.log('Connecting to stream...');
       try {
         await webrtcService.joinAsViewer((stream) => {
+          console.log('✅ Stream received in LivePage:', stream);
+          console.log('Video tracks:', stream.getVideoTracks());
+          console.log('Audio tracks:', stream.getAudioTracks());
+          
           if (videoRef.current) {
+            console.log('Attaching stream to video element');
             videoRef.current.srcObject = stream;
-            setStreamConnected(true);
+            
+            videoRef.current.onloadedmetadata = () => {
+              console.log('Video metadata loaded');
+              videoRef.current.play().then(() => {
+                console.log('✅ Video playback started');
+                setStreamConnected(true);
+              }).catch(err => {
+                console.error('Video play error:', err);
+              });
+            };
+          } else {
+            console.error('videoRef.current is null');
           }
         });
       } catch (error) {
@@ -42,9 +66,11 @@ export default function LivePage() {
     };
 
     return () => {
+      console.log('LivePage unmounting');
+      hasJoinedRef.current = false;
       webrtcService.disconnect();
     };
-  }, [setIsLive, setStreamTitle, streamConnected]);
+  }, [setIsLive, setStreamTitle]);
 
   return (
     <motion.div
@@ -77,15 +103,15 @@ export default function LivePage() {
               <div className="space-y-6">
                 {/* Stream Window */}
                 <div className="aspect-video bg-black relative">
-                  {streamConnected ? (
-                    <video
-                      ref={videoRef}
-                      autoPlay
-                      playsInline
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center flex-col">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    controls
+                    className={`w-full h-full object-cover ${!streamConnected ? 'hidden' : ''}`}
+                  />
+                  {!streamConnected && (
+                    <div className="absolute inset-0 flex items-center justify-center flex-col">
                       <div className="text-6xl mb-4">📹</div>
                       <p className="text-white text-xl">Connecting to stream...</p>
                       <p className="text-gray-400 mt-2">{streamTitle || 'Live Match'}</p>
