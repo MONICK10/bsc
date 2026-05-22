@@ -112,7 +112,7 @@ export const apiService = {
     // In production: authenticate with Supabase
     return new Promise((resolve) => {
       setTimeout(() => {
-        if (email === 'admin@bearhatty.com' && password === 'admin123') {
+        if (email === 'admin@bearhatty.com' && password === 'jithujithu') {
           resolve({ user: { id: '1', email }, token: 'mock-token' });
         } else {
           resolve(null);
