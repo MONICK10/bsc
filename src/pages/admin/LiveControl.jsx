@@ -24,14 +24,36 @@ export default function LiveControl() {
   const handleConnectCamera = async () => {
     setLoading(true);
     try {
+      console.log('Requesting camera access...');
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
+        video: { 
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
         audio: true,
       });
+      
+      console.log('Stream obtained:', mediaStream);
+      console.log('Video tracks:', mediaStream.getVideoTracks());
+      console.log('Audio tracks:', mediaStream.getAudioTracks());
+      
       setStream(mediaStream);
+      
       if (videoRef.current) {
+        console.log('Attaching stream to video element');
         videoRef.current.srcObject = mediaStream;
+        
+        try {
+          await videoRef.current.play();
+          console.log('Video playback started');
+        } catch (playError) {
+          console.error('Video play error:', playError);
+        }
+      } else {
+        console.error('videoRef.current is null');
       }
+      
       setCameraConnected(true);
     } catch (error) {
       console.error('Camera access denied:', error);
@@ -122,17 +144,16 @@ export default function LiveControl() {
       <motion.div className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-2xl font-bold text-navy-blue mb-4">Camera Preview</h2>
         
-        <div className="mb-6 relative bg-black rounded-lg overflow-hidden aspect-video flex items-center justify-center">
-          {cameraConnected ? (
-            <video
-              ref={videoRef}
-              autoPlay
-              muted
-              playsInline
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="flex flex-col items-center justify-center text-white">
+        <div className="mb-6 relative bg-black rounded-lg overflow-hidden aspect-video">
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            playsInline
+            className={`w-full h-full object-cover ${!cameraConnected ? 'hidden' : ''}`}
+          />
+          {!cameraConnected && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
               <div className="text-6xl mb-4">📹</div>
               <p>Camera not connected</p>
             </div>
