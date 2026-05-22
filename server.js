@@ -94,11 +94,12 @@ const deleteFile = (filePath) => {
 };
 
 // Helper function to convert image paths to absolute URLs
-const formatMatchesForResponse = (matches) => {
+const formatMatchesForResponse = (matches, req) => {
+  const baseUrl = req ? `${req.protocol}://${req.get('host')}` : '';
   return matches.map(match => ({
     ...match,
-    team1_image: match.team1_image ? `http://localhost:3001${match.team1_image}` : null,
-    team2_image: match.team2_image ? `http://localhost:3001${match.team2_image}` : null
+    team1_image: match.team1_image ? `${baseUrl}${match.team1_image}` : null,
+    team2_image: match.team2_image ? `${baseUrl}${match.team2_image}` : null
   }));
 };
 
@@ -110,7 +111,7 @@ app.get('/api/matches', (req, res) => {
     const matches = readMatches();
     // Sort by match_date
     matches.sort((a, b) => new Date(a.match_date) - new Date(b.match_date));
-    res.json(formatMatchesForResponse(matches));
+    res.json(formatMatchesForResponse(matches, req));
   } catch (error) {
     console.error('Error fetching matches:', error);
     res.status(500).json({ error: 'Failed to fetch matches' });
@@ -148,7 +149,7 @@ app.post('/api/matches', upload.fields([{ name: 'team1_image' }, { name: 'team2_
     matches.push(newMatch);
     writeMatches(matches);
 
-    const formattedMatch = formatMatchesForResponse([newMatch])[0];
+    const formattedMatch = formatMatchesForResponse([newMatch], req)[0];
     res.status(201).json(formattedMatch);
   } catch (error) {
     console.error('Error creating match:', error);
@@ -203,7 +204,7 @@ app.put('/api/matches/:id', upload.fields([{ name: 'team1_image' }, { name: 'tea
     matches[matchIndex] = currentMatch;
     writeMatches(matches);
 
-    const formattedMatch = formatMatchesForResponse([currentMatch])[0];
+    const formattedMatch = formatMatchesForResponse([currentMatch], req)[0];
     res.json(formattedMatch);
   } catch (error) {
     console.error('Error updating match:', error);
