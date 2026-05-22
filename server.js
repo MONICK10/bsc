@@ -342,6 +342,10 @@ app.put('/api/live/end', (req, res) => {
   }
 });
 
+// ============================================
+// SOCKET.IO SETUP
+// ============================================
+
 const io = new Server(httpServer, {
   cors: {
     origin: '*',
@@ -354,11 +358,10 @@ const io = new Server(httpServer, {
   pingInterval: 25000
 });
 
-let liveState = {
-  isLive: false,
-  streamTitle: '',
-  adminSocketId: null
-};
+// Chat system variables
+const chatUsers = new Map();
+const chatMessages = [];
+const MAX_MESSAGES = 100;
 
 console.log('Socket.IO server initializing...');
 
@@ -369,70 +372,42 @@ io.on('connection', (socket) => {
     console.log('🔄 Transport upgraded to:', socket.conn.transport.name);
   });
 
-  socket.on('admin:join', () => {
-    console.log('👨‍💼 Admin joined:', socket.id);
-    liveState.adminSocketId = socket.id;
-    socket.emit('live:state', liveState);
-  });
-
-  socket.on('viewer:join', () => {
-    console.log('👀 Viewer joined:', socket.id);
-    socket.emit('live:state', liveState);
+  // Chat events
+  socket.on('join-chat', (username) => {
+    chatUsers.set(socket.id, username);
+    console.log(`💬 ${username} joined chat`);
     
-    if (liveState.isLive && liveState.adminSocketId) {
-      console.log('📺 Notifying admin about viewer:', socket.id);
-      socket.to(liveState.adminSocketId).emit('viewer:request-stream', socket.id);
+    socket.emit('chat-history', chatMessages);
+    io.emit('online-count', chatUsers.size);
+  });
+
+  socket.on('send-message', (data) => {
+    const username = chatUsers.get(socket.id);
+    if (!username) return;
+
+    const message = {
+      id: Date.now(),
+      username,
+      text: data.text,
+      timestamp: new Date().toISOString()
+    };
+
+    chatMessages.push(message);
+    if (chatMessages.length > MAX_MESSAGES) {
+      chatMessages.shift();
     }
-  });
 
-  socket.on('stream:start', (data) => {
-    console.log('🎥 Stream started:', data);
-    liveState.isLive = true;
-    liveState.streamTitle = data.title;
-    liveState.adminSocketId = socket.id;
-    io.emit('live:state', liveState);
-  });
-
-  socket.on('stream:stop', () => {
-    console.log('⏹️ Stream stopped');
-    liveState.isLive = false;
-    liveState.streamTitle = '';
-    liveState.adminSocketId = null;
-    io.emit('live:state', liveState);
-  });
-
-  socket.on('offer', (data) => {
-    console.log('📤 Offer sent to:', data.to);
-    socket.to(data.to).emit('offer', {
-      offer: data.offer,
-      from: socket.id
-    });
-  });
-
-  socket.on('answer', (data) => {
-    console.log('📥 Answer sent to:', data.to);
-    socket.to(data.to).emit('answer', {
-      answer: data.answer,
-      from: socket.id
-    });
-  });
-
-  socket.on('ice-candidate', (data) => {
-    console.log('🧊 ICE candidate sent to:', data.to);
-    socket.to(data.to).emit('ice-candidate', {
-      candidate: data.candidate,
-      from: socket.id
-    });
+    io.emit('new-message', message);
   });
 
   socket.on('disconnect', () => {
     console.log('❌ Client disconnected:', socket.id);
-    if (socket.id === liveState.adminSocketId) {
-      console.log('⚠️ Admin disconnected, stopping stream');
-      liveState.isLive = false;
-      liveState.streamTitle = '';
-      liveState.adminSocketId = null;
-      io.emit('live:state', liveState);
+    
+    const username = chatUsers.get(socket.id);
+    if (username) {
+      chatUsers.delete(socket.id);
+      io.emit('online-count', chatUsers.size);
+      console.log(`💬 ${username} left chat`);
     }
   });
 
@@ -450,9 +425,9 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     socketio: 'running',
-    liveState,
     matchesFile: matchesFile,
-    uploadsDir: uploadsDir
+    uploadsDir: uploadsDir,
+    chatUsers: chatUsers.size
   });
 });
 
@@ -474,12 +449,3 @@ httpServer.listen(PORT, HOST, () => {
   console.log(`📸 Uploads folder: ${uploadsDir}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
-c o n s t   c h a t U s e r s   =   n e w   M a p ( ) ;     
- 
- c o n s t   c h a t M e s s a g e s   =   [ ] ;     
- 
-
-// Chat system variables
-const chatUsers = new Map();
-const chatMessages = [];
-const MAX_MESSAGES = 100;
