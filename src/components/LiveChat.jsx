@@ -34,26 +34,8 @@ export default function LiveChat({ isLive }) {
       setMessages(history);
     });
 
-    newSocket.on('chat-message', (message) => {
+    newSocket.on('new-message', (message) => {
       setMessages(prev => [...prev, message]);
-    });
-
-    newSocket.on('user-joined', (data) => {
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        type: 'system',
-        message: `${data.username} joined the chat`,
-        timestamp: data.timestamp
-      }]);
-    });
-
-    newSocket.on('user-left', (data) => {
-      setMessages(prev => [...prev, {
-        id: Date.now(),
-        type: 'system',
-        message: `${data.username} left the chat`,
-        timestamp: data.timestamp
-      }]);
     });
 
     newSocket.on('online-count', (count) => {
@@ -82,7 +64,7 @@ export default function LiveChat({ isLive }) {
     e.preventDefault();
     if (!inputMessage.trim() || !socket) return;
 
-    socket.emit('send-message', { message: inputMessage });
+    socket.emit('send-message', { text: inputMessage });
     setInputMessage('');
   };
 
@@ -148,19 +130,19 @@ export default function LiveChat({ isLive }) {
               key={msg.id}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className={msg.type === 'system' ? 'text-center' : ''}
             >
-              {msg.type === 'system' ? (
-                <p className="text-slate-500 text-xs italic">{msg.message}</p>
-              ) : (
-                <div className="bg-slate-700 rounded-lg p-3">
-                  <div className="flex items-center justify-between mb-1">
+              <div className="flex items-start space-x-2">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-sky-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
+                  <span className="text-white font-bold text-sm">{msg.username.charAt(0).toUpperCase()}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline space-x-2">
                     <span className="text-sky-400 font-semibold text-sm">{msg.username}</span>
                     <span className="text-slate-500 text-xs">{formatTime(msg.timestamp)}</span>
                   </div>
-                  <p className="text-white text-sm break-words">{msg.message}</p>
+                  <p className="text-white text-sm break-words mt-1">{msg.text}</p>
                 </div>
-              )}
+              </div>
             </motion.div>
           ))}
         </AnimatePresence>
