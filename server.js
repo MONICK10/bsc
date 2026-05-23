@@ -442,8 +442,6 @@ app.get('/health', (req, res) => {
     liveViewers: liveViewers.size
   });
 });
-  });
-});
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
