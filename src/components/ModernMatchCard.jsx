@@ -39,6 +39,8 @@ export default function ModernMatchCard({ match, onEdit, onDelete, isAdmin = fal
                 src={match.team1_image}
                 alt={match.team1_name}
                 className="w-full h-full object-cover"
+                loading="lazy"
+                decoding="async"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-4xl text-white/80">
@@ -67,6 +69,8 @@ export default function ModernMatchCard({ match, onEdit, onDelete, isAdmin = fal
                 src={match.team2_image}
                 alt={match.team2_name}
                 className="w-full h-full object-cover"
+                loading="lazy"
+                decoding="async"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-4xl text-white/80">

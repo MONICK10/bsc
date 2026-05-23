@@ -59,6 +59,8 @@ export default function HeroSection() {
                   src="/images/logo.png"
                   alt="Bearhatty Logo"
                   className="h-24 w-24 md:h-32 md:w-32 rounded-full relative shadow-glow"
+                  loading="lazy"
+                  decoding="async"
                 />
               </div>
             </motion.div>

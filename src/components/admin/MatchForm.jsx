@@ -184,6 +184,7 @@ export default function MatchForm({ onSubmit, initialData, isLoading }) {
                     src={team1Preview}
                     alt="Team 1"
                     className="w-full h-full object-cover"
+                    decoding="async"
                   />
                   {uploadProgress.team1 > 0 && uploadProgress.team1 < 100 && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
@@ -228,6 +229,7 @@ export default function MatchForm({ onSubmit, initialData, isLoading }) {
                     src={team2Preview}
                     alt="Team 2"
                     className="w-full h-full object-cover"
+                    decoding="async"
                   />
                   {uploadProgress.team2 > 0 && uploadProgress.team2 < 100 && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">

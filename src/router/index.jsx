@@ -1,25 +1,34 @@
+import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout.jsx';
 import AdminLayout from '../layouts/AdminLayout.jsx';
+import LoadingSkeleton from '../components/LoadingSkeleton.jsx';
 
-// Pages
-import HomePage from '../pages/HomePage.jsx';
-import AboutPage from '../pages/AboutPage.jsx';
-import AchievementsPage from '../pages/AchievementsPage.jsx';
-import MatchesPage from '../pages/MatchesPage.jsx';
-import UpcomingMatchesPage from '../pages/UpcomingMatchesPage.jsx';
-import LivePage from '../pages/LivePage.jsx';
-import AdminLoginPage from '../pages/AdminLoginPage.jsx';
-import AdminDashboard from '../pages/AdminDashboard.jsx';
-import ManageMatches from '../pages/admin/ManageMatches.jsx';
-import ManageAchievements from '../pages/admin/ManageAchievements.jsx';
-import LiveControl from '../pages/admin/LiveControl.jsx';
-import NotFoundPage from '../pages/NotFoundPage.jsx';
+// Lazy load all pages for better performance
+const HomePage = lazy(() => import('../pages/HomePage.jsx'));
+const AboutPage = lazy(() => import('../pages/AboutPage.jsx'));
+const AchievementsPage = lazy(() => import('../pages/AchievementsPage.jsx'));
+const MatchesPage = lazy(() => import('../pages/MatchesPage.jsx'));
+const UpcomingMatchesPage = lazy(() => import('../pages/UpcomingMatchesPage.jsx'));
+const LivePage = lazy(() => import('../pages/LivePage.jsx'));
+const AdminLoginPage = lazy(() => import('../pages/AdminLoginPage.jsx'));
+const AdminDashboard = lazy(() => import('../pages/AdminDashboard.jsx'));
+const ManageMatches = lazy(() => import('../pages/admin/ManageMatches.jsx'));
+const ManageAchievements = lazy(() => import('../pages/admin/ManageAchievements.jsx'));
+const LiveControl = lazy(() => import('../pages/admin/LiveControl.jsx'));
+const NotFoundPage = lazy(() => import('../pages/NotFoundPage.jsx'));
 
 // Protected route component
 const ProtectedRoute = ({ children, isAuthenticated }) => {
   return isAuthenticated ? children : <Navigate to="/admin/login" replace />;
 };
+
+// Suspense wrapper for lazy loaded pages
+const LazyPageWrapper = ({ children }) => (
+  <Suspense fallback={<LoadingSkeleton />}>
+    {children}
+  </Suspense>
+);
 
 export const router = createBrowserRouter([
   {
@@ -28,33 +37,33 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <HomePage />,
+        element: <LazyPageWrapper><HomePage /></LazyPageWrapper>,
       },
       {
         path: 'about',
-        element: <AboutPage />,
+        element: <LazyPageWrapper><AboutPage /></LazyPageWrapper>,
       },
       {
         path: 'achievements',
-        element: <AchievementsPage />,
+        element: <LazyPageWrapper><AchievementsPage /></LazyPageWrapper>,
       },
       {
         path: 'matches',
-        element: <MatchesPage />,
+        element: <LazyPageWrapper><MatchesPage /></LazyPageWrapper>,
       },
       {
         path: 'upcoming-matches',
-        element: <UpcomingMatchesPage />,
+        element: <LazyPageWrapper><UpcomingMatchesPage /></LazyPageWrapper>,
       },
       {
         path: 'live',
-        element: <LivePage />,
+        element: <LazyPageWrapper><LivePage /></LazyPageWrapper>,
       },
     ],
   },
   {
     path: '/admin/login',
-    element: <AdminLoginPage />,
+    element: <LazyPageWrapper><AdminLoginPage /></LazyPageWrapper>,
   },
   {
     path: '/admin',
@@ -62,24 +71,24 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <AdminDashboard />,
+        element: <LazyPageWrapper><AdminDashboard /></LazyPageWrapper>,
       },
       {
         path: 'matches',
-        element: <ManageMatches />,
+        element: <LazyPageWrapper><ManageMatches /></LazyPageWrapper>,
       },
       {
         path: 'achievements',
-        element: <ManageAchievements />,
+        element: <LazyPageWrapper><ManageAchievements /></LazyPageWrapper>,
       },
       {
         path: 'live',
-        element: <LiveControl />,
+        element: <LazyPageWrapper><LiveControl /></LazyPageWrapper>,
       },
     ],
   },
   {
     path: '*',
-    element: <NotFoundPage />,
+    element: <LazyPageWrapper><NotFoundPage /></LazyPageWrapper>,
   },
 ]);

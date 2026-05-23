@@ -35,6 +35,8 @@ export default function AdminSidebar() {
             src="/images/logo.png"
             alt="Bearhatty Logo"
             className="h-12 w-12 rounded-full shadow-glow"
+            loading="lazy"
+            decoding="async"
           />
           <div>
             <p className="text-lg font-bebas tracking-wider gradient-text">BEARHATTY</p>

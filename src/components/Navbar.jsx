@@ -59,6 +59,8 @@ export default function Navbar() {
                 src="/images/logo.png"
                 alt="Bearhatty Logo"
                 className="h-14 w-14 rounded-full shadow-soft hover:shadow-glow smooth-transition"
+                loading="lazy"
+                decoding="async"
               />
               <span className="gradient-text text-2xl hidden sm:inline">
                 BEARHATTY

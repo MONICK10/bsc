@@ -1,12 +1,13 @@
 // Local file-based API service for match management
 // Uses Express backend with local JSON storage and file uploads
 
-const API_BASE = 'http://localhost:3001';
+// Use environment variable for API URL, with fallback to current domain for production
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 // Fetch all matches
 export const fetchMatches = async () => {
   try {
-    const response = await fetch(`${API_BASE}/api/matches`);
+    const response = await fetch(`${API_BASE_URL}/api/matches`);
     if (!response.ok) throw new Error('Failed to fetch matches');
     return await response.json();
   } catch (error) {
@@ -38,7 +39,7 @@ export const createMatch = async (matchData, team1File, team2File) => {
       formData.append('team2_image', team2File);
     }
 
-    const response = await fetch(`${API_BASE}/api/matches`, {
+    const response = await fetch(`${API_BASE_URL}/api/matches`, {
       method: 'POST',
       body: formData
     });
@@ -74,7 +75,7 @@ export const updateMatch = async (matchId, matchData, team1File, team2File) => {
       formData.append('team2_image', team2File);
     }
 
-    const response = await fetch(`${API_BASE}/api/matches/${matchId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/matches/${matchId}`, {
       method: 'PUT',
       body: formData
     });
@@ -90,7 +91,7 @@ export const updateMatch = async (matchId, matchData, team1File, team2File) => {
 // Delete match and associated images
 export const deleteMatch = async (matchId) => {
   try {
-    const response = await fetch(`${API_BASE}/api/matches/${matchId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/matches/${matchId}`, {
       method: 'DELETE'
     });
 
