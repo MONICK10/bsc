@@ -362,11 +362,17 @@ const io = new Server(httpServer, {
 const chatUsers = new Map();
 const chatMessages = [];
 const MAX_MESSAGES = 100;
+const liveViewers = new Set();
 
 console.log('Socket.IO server initializing...');
 
 io.on('connection', (socket) => {
   console.log('✅ Client connected:', socket.id, 'Transport:', socket.conn.transport.name);
+
+  // Track all viewers (including non-chat users)
+  liveViewers.add(socket.id);
+  io.emit('viewer-count', liveViewers.size);
+  console.log(`👥 Live viewers: ${liveViewers.size}`);
 
   socket.conn.on('upgrade', () => {
     console.log('🔄 Transport upgraded to:', socket.conn.transport.name);
@@ -403,6 +409,11 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log('❌ Client disconnected:', socket.id);
     
+    // Remove from viewers
+    liveViewers.delete(socket.id);
+    io.emit('viewer-count', liveViewers.size);
+    console.log(`👥 Live viewers: ${liveViewers.size}`);
+    
     const username = chatUsers.get(socket.id);
     if (username) {
       chatUsers.delete(socket.id);
@@ -427,7 +438,10 @@ app.get('/health', (req, res) => {
     socketio: 'running',
     matchesFile: matchesFile,
     uploadsDir: uploadsDir,
-    chatUsers: chatUsers.size
+    chatUsers: chatUsers.size,
+    liveViewers: liveViewers.size
+  });
+});
   });
 });
 

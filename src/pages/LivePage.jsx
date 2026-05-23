@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { io } from 'socket.io-client';
 import { liveService } from '../services/liveService.js';
 import LiveBadge from '../components/LiveBadge.jsx';
 import LiveChat from '../components/LiveChat.jsx';
@@ -9,11 +10,33 @@ export default function LivePage() {
   const [matchTitle, setMatchTitle] = useState('');
   const [youtubeVideoId, setYoutubeVideoId] = useState('');
   const [loading, setLoading] = useState(true);
+  const [viewerCount, setViewerCount] = useState(0);
 
   useEffect(() => {
     loadLiveStatus();
     const interval = setInterval(loadLiveStatus, 10000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Connect to socket.io for live viewer count
+  useEffect(() => {
+    const socket = io();
+
+    socket.on('connect', () => {
+      console.log('Connected to live broadcast');
+    });
+
+    socket.on('viewer-count', (count) => {
+      setViewerCount(count);
+    });
+
+    socket.on('disconnect', () => {
+      console.log('Disconnected from live broadcast');
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   const loadLiveStatus = async () => {
@@ -90,10 +113,31 @@ export default function LivePage() {
                         <span className="w-2 h-2 bg-white rounded-full"></span>
                         <span>LIVE</span>
                       </motion.div>
+
+                      {/* Viewer Count */}
+                      <motion.div
+                        className="absolute bottom-4 left-4 bg-black/70 text-white px-3 py-2 rounded-lg font-semibold flex items-center space-x-2 z-10"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <span className="text-lg">👥</span>
+                        <span>{viewerCount.toLocaleString()} watching</span>
+                      </motion.div>
                     </div>
 
                     <div className="p-6 border-t">
-                      <h2 className="text-2xl font-bold text-navy-blue mb-2">{matchTitle}</h2>
+                      <div className="flex items-center justify-between mb-2">
+                        <h2 className="text-2xl font-bold text-navy-blue">{matchTitle}</h2>
+                        <motion.div
+                          className="flex items-center space-x-1 text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-lg font-semibold"
+                          animate={{ scale: [1, 1.05, 1] }}
+                          transition={{ duration: 0.5, repeat: Infinity }}
+                        >
+                          <span>👥</span>
+                          <span>{viewerCount.toLocaleString()} watching</span>
+                        </motion.div>
+                      </div>
                       <p className="text-gray-600">Tune in to watch the action unfold live!</p>
                     </div>
                   </div>
